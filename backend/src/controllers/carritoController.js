@@ -6,14 +6,28 @@ exports.getCart = async (req, res) => {
 
     try {
         const [cart] = await pool.query(
-            `SELECT c.id_carrito, cp.id AS id_carrito_producto, p.id AS id_producto, p.nombre, p.precio, cp.cantidad, p.imagen,p.discount
-             FROM carrito_productos cp
-             JOIN productos p ON cp.id_producto = p.id
-             JOIN carrito c ON cp.id_carrito = c.id_carrito
-             WHERE c.id_usuario = ?`, 
-            [userId]
-        );
-
+                `SELECT 
+                c.id_carrito, 
+                cp.id AS id_carrito_producto, 
+                p.id AS id_producto, 
+                p.nombre, 
+                p.precio, 
+                cp.cantidad, 
+                p.discount,
+                (SELECT ip.nombre_archivo 
+                FROM imagenes_productos ip 
+                WHERE ip.producto_id = p.id 
+                ORDER BY ip.id ASC 
+                LIMIT 1) AS imagen
+                FROM carrito_productos cp
+                JOIN productos p ON cp.id_producto = p.id
+                JOIN carrito c ON cp.id_carrito = c.id_carrito
+                WHERE c.id_usuario = ?
+                `, 
+                    [userId]
+                );
+              // 👇 Mostrar en consola del servidor
+        console.log("Carrito del usuario:", cart);
         res.json(cart);
     } catch (error) {
         console.error(error);

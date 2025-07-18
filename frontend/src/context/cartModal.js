@@ -46,7 +46,7 @@ export default function CartModal() {
                                 <div key={item.id_producto} className="flex items-center gap-4 p-2 border-b">
                                     {/* 📸 Imagen del producto */}
                                     <img 
-                                        src={item.imagen} 
+                                        src={`http://localhost:5000/${item.imagen}`} 
                                         alt={item.nombre} 
                                         className="w-16 h-16 object-cover rounded-md"
                                     />

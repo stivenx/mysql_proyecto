@@ -1,32 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from "../config/api"
-
+import  useRolAuthRedirect from "../Hooks/rolAuthRedirect"
 
 const ProductCreate = () =>{
+    useRolAuthRedirect();
     
     const [nombre, setNombre] = useState("");
-    const [imagen,setimagen] = useState("");
+    const [imagenes,setImagenes] = useState({});
     const [precio,setprecio] = useState(1);
     const [cantidad_disponible,setcantidad_disponible] = useState(1);
     const [categoria,setcategoria] = useState("");
     const [selecteCategory, setSelecteCategory] = useState([]);
+    const [tipo, setTipo] = useState("");
+     const [selecteTipo, setSelecteTipo] = useState([]);
+     const [discount, setDiscount] = useState(0);
     const [errors, setErrors] = useState("");
+    const [preview,setPreview] = useState({})
     const navigate = useNavigate();
 
+       const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImagenes(files);
+    setPreview(files.map((file) => URL.createObjectURL(file)));
+  };
 
+  const removeImage = (indexToRemove) => {
+  setImagenes((prev) => prev.filter((_, i) => i !== indexToRemove));
+  setPreview((prev) => prev.filter((_, i) => i !== indexToRemove));
+  };
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrors(""); // Reiniciar errores antes de enviar la petición
-    
+
+         // ✅ Validaciones previas
+          if (!nombre || !categoria || !tipo || imagenes.length === 0) {
+            setErrors("Por favor completa todos los campos y sube al menos una imagen.");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+
+          if (discount < 0 || discount > 100 || isNaN(discount)) {
+            setErrors("El descuento debe estar entre 0 y 100.");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+        
+
         try {
-            const response = await api.post('/products', {
-                nombre,
-                precio,
-                cantidad_disponible,
-                categoria,
-                imagen,
-                discount:0
+                  const formData = new FormData(); 
+              formData.append("nombre",nombre);
+              formData.append("precio",precio);
+              formData.append("cantidad_disponible",cantidad_disponible);
+              formData.append("categoria",categoria);
+              formData.append('tipo', tipo);
+              formData.append('discount', discount);
+              for(const file of imagenes){
+                formData.append("imagenes", file);
+              }
+            const response = await api.post('/products', 
+                 formData, {
+                 headers: { "Content-Type": "multipart/form-data" },
             });
     
             console.log(response.data);
@@ -68,72 +102,152 @@ const ProductCreate = () =>{
             }
         };
         fetchCategories();
+        handleGettipo();
     }, []);
 
-     
+     const handleGettipo = async () => {
+        try {
+            const response = await api.get('/tipo');
+            setSelecteTipo(response.data);
+        } catch (error) {
+            console.error('Error al obtener las categorias:', error);
+        }
+    };
     return (
-        <div className="h-screen flex flex-col justify-center bg-white dark:bg-gray-900">
-            <h1 className="text-4xl font-semibold text-primary-900 dark:text-white text-center mb-8">
-                Crear un nuevo producto
-            </h1>
+  <div className="min-h-screen py-12 px-4 bg-white dark:bg-gray-900 overflow-y-auto">
+    <h1 className="text-4xl font-semibold text-primary-900 dark:text-white text-center mb-8">
+      Crear un nuevo producto
+    </h1>
 
-            {errors && (
-                    <div className="bg-red-500 text-white p-3 rounded-lg mb-4 text-center">
-                        {errors}
-                    </div>
-                )}
-            <form className="w-full max-w-md mx-auto" onSubmit={handleSubmit}>
-                <div className="mb-5">
-                    <label for="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        Nombre:
-                    </label>
-                    <input type="text" id="name" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-                </div>
-                <div classNameName="mb-5">
-                    <label for="price" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        precio:
-                    </label>
-                    <input type="number" id="price" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value={precio} min="1" onChange={(e) => setprecio(Math.max(1, parseInt(e.target.value)))} required />
-                </div>
-                
-                <div classNameName="mb-5">
-                    <label for="price" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        stock:
-                    </label>
-                    <input type="number" id="price" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value={cantidad_disponible} min="1" onChange={(e) => setcantidad_disponible(Math.max(1, parseInt(e.target.value)))} required />
-                </div>
-                <div className="mb-5">
-                    <label for="category" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        Categoría id:
-                    </label>
-                    <select
-                                value={categoria}
-                                onChange={(event) => setcategoria(event.target.value)}
-                                className="w-full p-2 border rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-                                >
-                                <option value="">Todos las categorías</option>
-                                {selecteCategory.map((category) => (
-                                    <option key={category.id} value={category.id}>
-                                    {category.nombre}
-                                    </option>
-                                ))}
-                                
-                                </select>
-                                
+    {errors && (
+      <div className="bg-red-500 text-white p-3 rounded-lg mb-4 text-center">
+        {errors}
+      </div>
+    )}
 
-                </div>
-                <div className="mb-5">
-                    <label for="imageUrl" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        Imagen:
-                    </label>
-                    <textarea id="imageUrl" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 h-20" value={imagen} onChange={(e) => setimagen(e.target.value)} required />
-                </div>
-                <button type="submit" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                    Crear
-                </button>
-            </form>
+    <form className="w-full max-w-md mx-auto" onSubmit={handleSubmit}>
+      <div className="mb-5">
+        <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+          Nombre:
+        </label>
+        <input
+          type="text"
+          id="name"
+          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="mb-5">
+        <label htmlFor="price" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+          Precio:
+        </label>
+        <input
+          type="number"
+          id="price"
+          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          value={precio}
+          min="1"
+          onChange={(e) => setprecio(Math.max(1, parseInt(e.target.value)))}
+          required
+        />
+      </div>
+
+      <div className="mb-5">
+        <label htmlFor="stock" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+          Stock:
+        </label>
+        <input
+          type="number"
+          id="stock"
+          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          value={cantidad_disponible}
+          min="1"
+          onChange={(e) => setcantidad_disponible(Math.max(1, parseInt(e.target.value)))}
+          required
+        />
+      </div>
+
+      <div className="mb-5">
+        <label htmlFor="category" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+          Categoría id:
+        </label>
+        <select
+          value={categoria}
+          onChange={(e) => setcategoria(e.target.value)}
+          className="w-full p-2 border rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="">Todas las categorías</option>
+          {selecteCategory.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-5">
+        <label htmlFor="type" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+          Tipo:
+        </label>
+        <select
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value)}
+          className="w-full p-2 border rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="">Todos los tipos</option>
+          {selecteTipo.map((tipo) => (
+            <option key={tipo.id} value={tipo.id}>
+              {tipo.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-5">
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleFileChange}
+          className="block"
+          required
+        />
+      </div>
+
+      {preview.length > 0 && (
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          {preview.map((src, index) => (
+            <div key={index} className="relative">
+              <img
+                src={src}
+                alt={`Vista previa ${index + 1}`}
+                className="w-full h-32 object-cover rounded border"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
         </div>
-    );
+      )}
+
+      <button
+        type="submit"
+        className="mt-6 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      >
+        Crear
+      </button>
+    </form>
+  </div>
+);
+
 
 } 
 

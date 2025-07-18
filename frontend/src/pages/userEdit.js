@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../config/api';
-
+import  useRolAuthRedirect from "../Hooks/rolAuthRedirect"
 const UserEdit = () => {
 
-    //useAdminRedirect();
+    useRolAuthRedirect();
 
    
     const [nombre, setNombre] = useState('');
     const [correo, setCorreo] = useState('');
     const [contrasena, setContrasena] = useState('');
+    const [rol, setRol] = useState('');
    
 
     const { iduser } = useParams();
@@ -32,6 +33,7 @@ const UserEdit = () => {
                 nombre,
                 correo,
                 contrasena,
+                rol
                 
                 
             });
@@ -57,6 +59,7 @@ const UserEdit = () => {
             console.log(response.data);
             setNombre(response.data.nombre);
             setCorreo(response.data.correo);
+            setRol(response.data.rol);
             
             
             
@@ -85,13 +88,28 @@ const UserEdit = () => {
                     </label>
                     <input type="text" id="price" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
                 </div>
+                <div className="mb-5">
+                    <label htmlFor="rol" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        Rol:
+                    </label>
+                    <select
+                        id="rol"
+                        value={rol}
+                        onChange={(e) => setRol(e.target.value)}
+                        required
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    >
+                        <option value="">Selecciona un rol</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
 
-                
                 <div className="mb-5">
                     <label for="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                         password:
                     </label>
-                    <input type="password" id="password" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value={contrasena} onChange={(e) => setContrasena(e.target.value)} required />
+                    <input type="password" id="password" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value={contrasena} onChange={(e) => setContrasena(e.target.value)}  />
                 </div>
              <button type="submit" className="text-white bg-primary-500 hover:bg-primary-600 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-900">
                 actualizar

@@ -42,7 +42,7 @@ const CartPage = () => {
                             <div key={item.id_producto} className="flex items-center gap-4 p-4 border-b">
                                 {/* Imagen del producto */}
                                 <img 
-                                    src={item.imagen} 
+                                    src={`http://localhost:5000/${item.imagen}`} 
                                     alt={item.nombre} 
                                     className="w-20 h-20 object-cover rounded-lg"
                                 />

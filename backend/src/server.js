@@ -5,6 +5,8 @@ const routesProducts = require('./routes/routesProducts');
 const routesCategori = require('./routes/routesCategori');
 const routesCarrito = require('./routes/routesCarrito');
 const routesDocument = require('./routes/routesDocument');
+const routesTipo = require('./routes/routesTipo');
+const routesComment = require('./routes/routesComment');
 
 const dotenv = require('dotenv');
 const pool = require('./dbConfig/db');
@@ -24,7 +26,8 @@ const path = require ("path");
 
 // Esto es lo IMPORTANTE
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-
+app.use("/products", express.static(path.join(__dirname, "../products")));
+app.use("/comments", express.static(path.join(__dirname, "../comments")));
 
 
 app.use(cors());
@@ -35,6 +38,8 @@ app.use('/api/products', routesProducts);
 app.use('/api/categoria', routesCategori);
 app.use('/api/carrito', routesCarrito);
 app.use('/api/documentos', routesDocument);
+app.use('/api/tipo', routesTipo);
+app.use('/api/comentarios', routesComment);
 
 // Verificar conexión a la base de datos
 async function testDBConnection() {

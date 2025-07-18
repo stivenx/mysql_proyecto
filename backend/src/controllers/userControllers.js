@@ -20,11 +20,12 @@ exports.register = async (req, res) => {
 
         // Guardar el usuario en la base de datos
         const [result] = await pool.query('INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)', [nombre, correo, hashedPassword]);
-
+        
+        const [user] = await pool.query('SELECT * FROM usuarios WHERE iduser = ?', [result.insertId]);
        
 
         // Generar un token JWT
-        const token = jwt.sign({ iduser: result.insertId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ iduser: user[0].iduser,rol:user[0].rol }, process.env.JWT_SECRET, { expiresIn: '1h' });
         
 
         res.status(201).json({message: 'Usuario creado correctamente', id: result.insertId,nombre:req.body.nombre ,correo:req.body.correo,token });
@@ -52,7 +53,7 @@ exports.login = async (req, res) => {
         }
 
         // Generar un token JWT
-        const token = jwt.sign({ iduser: user[0].iduser }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ iduser: user[0].iduser,rol:user[0].rol }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
 
         res.status(200).json({message: 'Inicio de sesión exitoso', token });
@@ -98,32 +99,62 @@ exports.getUserById = async (req, res) => {
     }
 };
 
+
+
 exports.updateUser = async (req, res) => {
-    try {
-        const { iduser } = req.params;
-        const { nombre, correo, contrasena } = req.body;
-        const camposActualizados = [];
-       if (nombre) {
-           camposActualizados.push(`nombre = '${nombre}'`);
-       }
-       if (correo) {
-           camposActualizados.push(`correo = '${correo}'`);
-       }
-       if (contrasena) {
-           const hashedPassword = await bcrypt.hash(contrasena, 10);
-           camposActualizados.push(`contrasena = '${hashedPassword}'`);
-       }
-        const [result] = await pool.query(`UPDATE usuarios SET ${camposActualizados.join(', ')} WHERE iduser = ?`, [iduser]);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-        res.status(200).json({ message: 'Usuario actualizado correctamente' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al actualizar el usuario' });
+  try {
+    const { iduser } = req.params;
+    const { nombre, correo, contrasena, rol } = req.body;
+
+    const camposActualizados = [];
+    const valores = [];
+
+    if (nombre) {
+      camposActualizados.push('nombre = ?');
+      valores.push(nombre);
     }
 
+    if (correo) {
+      camposActualizados.push('correo = ?');
+      valores.push(correo);
+    }
+
+    if (contrasena) {
+      const hashedPassword = await bcrypt.hash(contrasena, 10);
+      camposActualizados.push('contrasena = ?');
+      valores.push(hashedPassword);
+    }
+
+    if (rol) {
+      camposActualizados.push('rol = ?');
+      valores.push(rol);
+    }
+
+    // Si no hay campos para actualizar
+    if (camposActualizados.length === 0) {
+      return res.status(400).json({ message: 'No se proporcionaron campos para actualizar.' });
+    }
+
+    // Agrega el ID al final de los valores
+    valores.push(iduser);
+
+    const [result] = await pool.query(
+      `UPDATE usuarios SET ${camposActualizados.join(', ')} WHERE iduser = ?`,
+      valores
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    res.status(200).json({ message: 'Usuario actualizado correctamente' });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el usuario' });
+  }
 };
+
 
 exports.deleteUser = async (req, res) => {
     try {

@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../config/api";
+import useAuthRedirect from "../Hooks/useAuthRedirect"
 
 
 const Login = () => {
+    useAuthRedirect();
+
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
     const navigate = useNavigate();

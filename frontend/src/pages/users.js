@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import api from "../config/api";
+import  useRolAuthRedirect from "../Hooks/rolAuthRedirect"
 
 const Users = () => {
+  useRolAuthRedirect();
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 5;
 
   useEffect(() => {
     fetchUsers();
@@ -40,6 +44,80 @@ const Users = () => {
     } catch (error) {
       console.error("Error al eliminar el usuario:", error);
     }
+  }; 
+
+  const indexOfLastUsers = currentPage * usersPerPage;
+  const indexOfFirstProduct = indexOfLastUsers - usersPerPage;
+  const currentUsers = users.slice(indexOfFirstProduct, indexOfLastUsers);
+  const totalPages = Math.ceil(users.length / usersPerPage);
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePageClick = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // 👇 Renderizado truncado de los números de páginas
+  const renderPageNumbers = () => {
+    const pageButtons = [];   // Aquí se almacenan los botones (números y '...')
+    const maxVisible = 3;     // Máximo de páginas centrales visibles
+    const ellipsis = '...';   // Texto para representar puntos suspensivos
+
+    if (totalPages <= maxVisible + 2) {
+      // Si hay pocas páginas (ej. <= 5), se muestran todas
+      for (let i = 1; i <= totalPages; i++) {
+        pageButtons.push(i);
+      }
+    } else if (currentPage <= maxVisible) {
+      // Si estás en las primeras páginas (ej. página 1, 2, 3)
+      for (let i = 1; i <= maxVisible + 1; i++) {
+        pageButtons.push(i);
+      }
+      pageButtons.push(ellipsis);      // Añade '...'
+      pageButtons.push(totalPages);    // Añade última página
+    } else if (currentPage >= totalPages - maxVisible) {
+      // Si estás cerca del final (ej. última o penúltima página)
+      pageButtons.push(1);             // Siempre muestra primera página
+      pageButtons.push(ellipsis);     // Añade '...'
+      for (let i = totalPages - maxVisible; i <= totalPages; i++) {
+        pageButtons.push(i);
+      }
+    } else {
+      // Si estás en medio (ej. página 5 de 10)
+      pageButtons.push(1);             // Muestra primera
+      pageButtons.push(ellipsis);     // ...
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        pageButtons.push(i);          // Muestra actual ± 1
+      }
+      pageButtons.push(ellipsis);     // ...
+      pageButtons.push(totalPages);   // Última
+    }
+
+    // Renderizar los botones y los '...'
+    return pageButtons.map((num, index) =>
+      num === ellipsis ? (
+        <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+          ...
+        </span>
+      ) : (
+        <button
+          key={num}
+          onClick={() => handlePageClick(num)}
+          className={`px-3 py-1 rounded font-semibold border transition ${
+            currentPage === num
+              ? "bg-yellow-400 text-black border-black"
+              : "bg-white hover:bg-gray-200 text-gray-800 border-gray-300"
+          }`}
+        >
+          {num}
+        </button>
+      )
+    );
   };
 
   return (
@@ -94,10 +172,11 @@ const Users = () => {
               </td>
             </tr>
           ) : (
-            users.map((user) => (
+            currentUsers.map((user) => (
               <tr key={user.iduser} className="border-b dark:border-gray-700">
                 <td className="px-6 py-4 text-gray-900 dark:text-white">{user.nombre}</td>
                 <td className="px-6 py-4">{user.correo}</td>
+                <td className="px-6 py-4">{user.rol}</td>
                 <td className="px-6 py-4">
                   <a href={`/UserEdit/${user.iduser}`} className="text-primary-500 hover:underline">
                     Editar
@@ -116,6 +195,29 @@ const Users = () => {
           )}
         </tbody>
       </table>
+      
+        {/* Navegación paginada */}
+        {totalPages > 1 &&  (
+          <div className="w-full flex flex-wrap justify-center items-center mt-10 gap-2">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded disabled:opacity-50"
+            >
+              Anterior
+            </button>
+
+            {renderPageNumbers()}
+
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
     </div>
   );
 };

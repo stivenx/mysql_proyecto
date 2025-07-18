@@ -1,14 +1,15 @@
 import React from "react";
 import api from "../config/api";
 import { useNavigate } from "react-router-dom";
-
+import useAuthRedirect from "../Hooks/useAuthRedirect"
 
 const Register = () => {
-
+     useAuthRedirect();
     const [nombre,setNombre] = React.useState("");
     const [correo,setCorreo] = React.useState("");
     const [contrasena,setContrasena] = React.useState("");
     const navigate = useNavigate();
+   
 
     const handleRegister = async (e) => {
         e.preventDefault();

@@ -1,95 +1,52 @@
 import React, { useEffect, useState } from "react";
-import api from '../config/api';
+import api from "../config/api";
+import { Link } from "react-router-dom";
 
+const Categories = () => {
+  const [categories, setCategories] = useState([]);
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/categoria/");
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Error al cargar las categorías:", error);
+    }
+  };
 
-const Categorys = () => {
-    const [categorys, setCategorys] = useState([]);
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <h2 className="text-3xl font-extrabold text-center text-gray-800 dark:text-white mb-10">
+        Explora por Categoría
+      </h2>
 
-    const handleDelete = async (categoryId) => {
-        try {
-            const response = await api.delete(`/categoria/${categoryId}`);
-            if (response.status === 200) {
-                setCategorys(categorys.filter((category) => category.id !== categoryId));
-                alert('El producto se ha eliminado correctamente');
-            } else {
-                console.error('Error al eliminar el producto:', response.data);
-            }
-        } catch (error) {
-            console.error('Error al eliminar el producto:', error);
-        }
-    };
-
-    useEffect(() => {
-        const fetchCategorys = async () => {
-            try {
-                const response = await api.get("/categoria/");
-                setCategorys(response.data);
-                console.log(response.data);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-        fetchCategorys();
-    }, []);
-    return (
-        <div class="relative overflow-x-auto shadow-md ">
-            <div class="flex justify-between items-center px-4 py-2 bg-primary-100 dark:bg-primary-800">
-                <h2 class="text-xl font-semibold text-primary-900 dark:text-white">
-                    Categorys</h2>
-               
-               
-                <a href="/CategoryCreate" class="px-4 py-2 bg-primary-700 text-white
-                hover:bg-primary-600">
-                    Add Category
-                </a>
-
-              
-            </div>
-            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                    <tr>
-                        <th scope="col" class="px-6 py-3">
-                            categoryId
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Nombre
-                        </th> 
-                      
-                        <th scope="col" class="px-6 py-3">
-                            Edit
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Delete
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {categorys.map((category) => (
-                        <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                            <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                {category.id}
-                            </td>
-                            <td class="px-6 py-4">
-                                {category.nombre}
-                            </td>
-        
-                            <td class="px-6 py-4">
-                                <a href={`CategoryEdit/${category.id}`} class="font-medium text-primary-500 hover:underline">
-                                    Edit</a>
-                            </td>
-                            <td class="px-6 py-4">
-                                <a style={{cursor: "pointer"}} onClick={() => handleDelete(category.id)} class="font-medium text-red-500 hover:underline">
-                                    Delete</a>
-                            </td>
-                        </tr>
-                    ))}
-
-                </tbody>
-            </table>
+      {categories.length === 0 ? (
+        <p className="text-center text-gray-500">No hay categorías disponibles.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
+          {categories.map((cat) => (
+            <Link
+              to={`/Categoryproducts/${cat.id}`}
+              key={cat.id}
+              className="group block bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            >
+              <div className="text-xl font-semibold text-gray-700 dark:text-white group-hover:text-primary-500 transition-colors">
+                {cat.nombre}
+              </div>
+              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Ver productos
+              </div>
+            </Link>
+          ))}
         </div>
-    );
-}
+      )}
+    </div>
+  );
+};
 
-export default Categorys
+export default Categories;
+
